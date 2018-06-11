@@ -4,7 +4,7 @@ var app 	= express();
 var http	= require('http').Server(app);
 var io		= require('socket.io')(http);
 var port	= process.env.PORT || 3000;
-var words	= [];
+var conn = "postgres://postgres:root@localhost:5432/catclub";
 
 process.setMaxListeners(0);
 
@@ -12,11 +12,11 @@ app.use("/", express.static(__dirname));
 
 var knex = require('knex')({
   client: 'pg',
-  connection: process.env.PG_CONNECTION_STRING || process.env.DATABASE_URL,
+  connection: conn || process.env.DATABASE_URL,
   searchPath: 'knex,public'
 });
 
-knex.schema.createTableIfNotExists('doodlera_table', function (table) {
+knex.schema.createTableIfNotExists('user', function (table) {
   table.increments();
   table.string('name');
   table.integer('points').defaultTo(0);
@@ -26,13 +26,21 @@ knex.schema.createTableIfNotExists('doodlera_table', function (table) {
 var bookshelf = require('bookshelf')(knex);
 
 var User = bookshelf.Model.extend({
-  tableName: 'doodlera_table'
+  tableName: 'user'
 });
+
+var playercount = 0;
 
 io.sockets.on('connection', function(socket){
 
 	var socketid;
 	var name;
+	
+	console.log("spam");
+	
+	socket.on('playermove', function(x,y,name){
+		io.emit('playermove', x, y, name);
+    });
 	
 	socket.on('chosenname', function(name){
 		socketid = 0;
@@ -41,7 +49,7 @@ io.sockets.on('connection', function(socket){
 		.fetch()
 		.then(function(model) {
 			if (model == null) {
-				new User({'name': name}).save().then(function(mdl) {
+				new User({'name': name, 'joined': new Date()}).save().then(function(mdl) {
 					socketid = mdl.get('id');
 				});
 			}
@@ -52,16 +60,20 @@ io.sockets.on('connection', function(socket){
 		});
     });
 	
-	socket.on('chat message', function(name, msg) {
+	socket.on('chat message', function(name, msg, control) {
 		if (msg == "!points")
 		{
 			new User({'name': name})
 			.fetch()
 			.then(function(model) {
-				io.emit('chat message',null,'' + name + ' has ' + model.get('points') + ' points.');
+				io.emit('chat message',null,'' + name + ' has ' + model.get('points') + ' points.', null);
 			});
 		}
-		io.emit('chat message', name, msg);
+		io.emit('chat message', name, msg, control);
+	});
+	
+	socket.on('reqspawn', function(target, name, x, y) {
+		io.emit('spawn', target, name, x, y);
 	});
 	
 	socket.on('disconnect', function() {
@@ -69,9 +81,11 @@ io.sockets.on('connection', function(socket){
 		new User({'id': socketid})
 		.fetch()
 		.then(function(model) {
-			io.emit('chat message',null,'' + model.get('name').replace(/`/g , "") + ' disconnected.');
+			var name = model.get('name').replace(/`/g , "");
+			io.emit('chat message', name,'' + name + ' disconnected.', 'disconnect');
 			playercount = playercount - 1;
 		});
+		
 	});
 });
 

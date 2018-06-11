@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Cat Club</title>
+	<script type="text/javascript" src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.1.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/doodlerstyle.css">
+  </head>
+  <body>
+	<div id="myModal" class="modal">
+	  <form class="modal-content" style="width:450px; height: 100px">
+		<nobr><input class="textbox" id="username" style="width: 60%; height: 50%" value=""/> <button class="myButton" id="myBtn" style="font-size: medium">Log in</button></nobr>
+	  </form>
+	</div>
+    <ul id="messages" class="dropdown"></ul>
+    <form id="sendform" class="form" action="">
+      <input class="textbox" id="m" autocomplete="off" style="width:90%; height: 50px"/><button class= "myButton" style="width:9%">Send</button>
+    </form>
+	<script type="text/javascript" src="js/clientsidelogic.js"></script>
+  </body>
+</html>

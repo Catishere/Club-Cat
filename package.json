@@ -1,10 +1,15 @@
 {
-  "name": "Club Cat",
-  "version": "0.0.1",
-  "description": "Club penguin replica",
-  "main": "index.js",
+  "name": "club-cat",
+  "version": "1.0.0",
+  "description": "Club cat for pro players",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Catishere/Club-Cat.git"
   },
   "author": "Victor Gyoshev",
   "license": "MIT",
@@ -15,8 +20,8 @@
     "pg": "^6.1.5",
     "socket.io": "^1.7.3"
   },
-  "engines": {
-    "node": "6.10.0",
-    "npm": "3.10.10"
-  }
+  "bugs": {
+    "url": "https://github.com/Catishere/Club-Cat/issues"
+  },
+  "homepage": "https://github.com/Catishere/Club-Cat#readme"
 }

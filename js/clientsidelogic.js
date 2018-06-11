@@ -1,27 +1,44 @@
 var modal = document.getElementById('myModal');
-var theend = document.getElementById('roundEnd');
-var paintings = document.getElementById('paintings');
 var btn = document.getElementById("myBtn");
-var players = 0;
-var sock = io();
+var socket = io();
 var yourname;
-var screen = new Image(500, 1000);
 
 btn.onclick = function() {
 	if ($('#username').val() != '')
 	{
 	    modal.style.display = "none"
-	    sock.emit('chosenname', $('#username').val())
+	    socket.emit('chosenname', $('#username').val())
 	    yourname = $('#username').val();
 	}
 }
 
-var socket = io();
+document.onclick = function() {
+	if (yourname != null && $('#'+yourname) != null) {
+		socket.emit('playermove', (event.clientX - 50 >= 0) ? event.clientX - 50 : 0, (event.clientY - 50 >= 0) ? event.clientY - 50 : 0, yourname);
+	}
+}
+
+function spawnPlayer(name, x, y) {
+	var fig = document.createElement("figure");
+	var player = document.createElement("img");
+	var nametext = document.createElement("figcaption");
+	fig.id = name;
+	player.src = "images/cat.png";
+	fig.className = "player";
+	nametext.innerHTML = name;
+	if (x != null ) {
+		fig.style.left = x + 'px';
+		fig.style.top = y + 'px';
+	}
+	fig.appendChild(player);
+	fig.appendChild(nametext);
+	document.body.appendChild(fig);
+}
 
 $('form').submit(function(){
   if ($('#username').val() != '')
   {
-	socket.emit('chat message',null, '' + $('#username').val() + ' joined.');
+	socket.emit('chat message',$('#username').val(), '' + $('#username').val() + ' joined.', 'join');
 	$('#username').val('');
   }
   else 
@@ -33,65 +50,23 @@ $('form').submit(function(){
 	  return false;
 });
 
-function setTextColor(picker) {
-	curColor = '#' + picker.toString()
-}
+socket.on('spawn', function(target, name, x, y){
+	if (yourname == target && target != name) spawnPlayer(name, x, y);
+});
 
-function KeyPress(e) {
-  var evtobj = window.event? event : e
-  if (evtobj.keyCode == 90 && evtobj.ctrlKey) {
-	var img = new Image();
-	undoHistory.pop();
-	newCanvas();
-	img.scr = undoHistory[undoHistory.length - 1];
-	context.drawImage(img, drawingAreaX, drawingAreaY, drawingAreaWidth, drawingAreaHeight);
+socket.on('chat message', function(name, msg, control){
+  
+  if (control == 'join') {
+	spawnPlayer(name, null, null);
+	var catplayer = $('#' + yourname);
+	socket.emit('reqspawn', name, yourname, parseInt(catplayer.css("left")), parseInt(catplayer.css("top")));
   }
-}
-
-document.onkeydown = KeyPress;
-
-socket.on('updateTimer', function(timerseconds, word){
-	document.getElementById("themeword").innerHTML = "Draw "+ word +"!";
-	if (timerseconds <= 60)
-		document.getElementById("timerShow").innerHTML = timerseconds;
-	else
-		document.getElementById("timerShow").innerHTML = "The round ended!";
-	if (timerseconds == 1)
-	{
-		var platno = document.getElementById('canvas');
-		
-		socket.emit('queuedrawing', platno.toDataURL(), yourname);
-		if (yourname != null)
-			theend.style.display = "flex";
-	}
-	if (timerseconds == 61)
-	{
-		$('#paintings').empty();
-		newCanvas();
-		undoHistory = [];
-		theend.style.display = "none";
-	}
-});
-
-socket.on('queuedrawing', function(imageurl, name){
-	if (name != null)
-	{
-		var image = new Image((canvas.width/2)-100, (canvas.height/2)-50);
-		image.id = "pic"
-		image.name = name;
-		if (yourname != name)
-			image.onclick = function () { socket.emit('winner',yourname, name); theend.style.display = "none"; };
-		else
-			image.onclick = function () {alert("Cannot vote for yourself!");};
-		image.src = imageurl;
-		document.getElementById('paintings').appendChild(image);
-	}
-});
-
-socket.on('chat message', function(name, msg){
-  if (name == null)
+  if (control == 'disconnect') {
+	  console.log("disappear please");
+	  $('#'+name).remove();
+  }
+  if (name == null || control != null)
   {
-	players++;
 	$('#messages').append($('<li>').text(msg));
   }
   else
@@ -102,3 +77,30 @@ socket.on('chat message', function(name, msg){
   var element = document.getElementById("messages");
   element.scrollTop = element.scrollHeight;
 });
+
+socket.on('playermove', function(x, y, name){
+  if (name == null) {
+	console.log("ebi si maikata");
+  } else {
+
+	var catplayer = $("#" + name);
+	catplayer.stop();
+	var xMove = x - parseInt(catplayer.css("left"));
+	var yMove = y - parseInt(catplayer.css("top"));
+	
+	if (xMove >= 0) xMove = "+=" + xMove;
+	else xMove = "-=" + -xMove;
+	
+	if (yMove >= 0) yMove = "+=" + yMove;
+	else yMove = "-=" + -yMove;
+	
+	
+	$( "#" + name ).animate({
+			left: xMove,
+			top: yMove
+		}, "slow" );
+  }
+  var element = document.getElementById("messages");
+  element.scrollTop = element.scrollHeight;
+});
+
