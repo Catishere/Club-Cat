@@ -12,7 +12,7 @@ app.use("/", express.static(__dirname));
 
 var knex = require('knex')({
   client: 'pg',
-  connection: conn || process.env.DATABASE_URL,
+  connection:  process.env.DATABASE_URL || conn,
   searchPath: 'knex,public'
 });
 
