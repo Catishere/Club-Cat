@@ -19,6 +19,7 @@ var knex = require('knex')({
 knex.schema.createTableIfNotExists('user', function (table) {
   table.increments();
   table.string('name');
+  table.string('password');
   table.integer('points').defaultTo(0);
   table.date("joined");
 }).then();
@@ -42,19 +43,27 @@ io.sockets.on('connection', function(socket){
 		io.emit('playermove', x, y, name);
     });
 	
-	socket.on('chosenname', function(name){
+	socket.on('chosenname', function(name, password){
 		socketid = 0;
 		
 		new User({'name': name})
 		.fetch()
 		.then(function(model) {
 			if (model == null) {
-				new User({'name': name, 'joined': new Date()}).save().then(function(mdl) {
+				new User({'name': name, 'password': password, 'joined': new Date()}).save().then(function(mdl) {
 					socketid = mdl.get('id');
+					socket.emit('login');
 				});
 			}
 			else {
-				socketid = model.get('id');
+				if (model.get('password') == password) {
+					socketid = model.get('id');
+					socket.emit('login');
+				}
+				else {
+					socket.emit('errors', 'Wrong password!');
+					playercount = playercount - 1;
+				}
 			}
 			playercount = playercount + 1;
 		});

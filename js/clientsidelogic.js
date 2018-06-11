@@ -4,18 +4,33 @@ var socket = io();
 var yourname;
 
 btn.onclick = function() {
-	if ($('#username').val() != '')
+	var username = $('#username').val();
+	var password = $('#password').val();
+	
+	if (username != '' && password != '')
 	{
-	    modal.style.display = "none"
-	    socket.emit('chosenname', $('#username').val())
-	    yourname = $('#username').val();
+		if (username.indexOf(" ") === -1)
+			socket.emit('chosenname', username, password);
+		else
+			displayError("You cant have spaces in your username!");
+	} else {
+		displayError("Enter username and password!");
 	}
 }
 
+
 document.onclick = function() {
 	if (yourname != null && $('#'+yourname) != null) {
-		socket.emit('playermove', (event.clientX - 50 >= 0) ? event.clientX - 50 : 0, (event.clientY - 50 >= 0) ? event.clientY - 50 : 0, yourname);
+		socket.emit('playermove', (event.clientX - 100 >= 0) ? event.clientX - 100 : 0, (event.clientY - 70 >= 0) ? event.clientY - 70 : 0, yourname);
 	}
+}
+
+function displayError(message) {
+	var div = document.createElement("div");
+	div.innerHTML = message;
+	div.className = "error";
+	document.body.appendChild(div);
+	setTimeout(function(){ div.remove(); }, 6000);
 }
 
 function spawnPlayer(name, x, y) {
@@ -38,8 +53,7 @@ function spawnPlayer(name, x, y) {
 $('form').submit(function(){
   if ($('#username').val() != '')
   {
-	socket.emit('chat message',$('#username').val(), '' + $('#username').val() + ' joined.', 'join');
-	$('#username').val('');
+
   }
   else 
   {
@@ -78,9 +92,20 @@ socket.on('chat message', function(name, msg, control){
   element.scrollTop = element.scrollHeight;
 });
 
+socket.on('errors', function(message){
+	displayError(message);
+});
+
+socket.on('login', function(){
+	modal.style.display = "none"
+	yourname = $('#username').val();
+	socket.emit('chat message', yourname, '' + yourname + ' joined.', 'join');
+	$('#username').val('');
+});
+
 socket.on('playermove', function(x, y, name){
   if (name == null) {
-	console.log("ebi si maikata");
+	console.log("Error, player is not found");
   } else {
 
 	var catplayer = $("#" + name);
