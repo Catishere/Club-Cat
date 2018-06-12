@@ -30,6 +30,8 @@ var User = bookshelf.Model.extend({
   tableName: 'user'
 });
 
+var hardcode_users = [];
+
 var playercount = 0;
 
 io.sockets.on('connection', function(socket){
@@ -37,36 +39,38 @@ io.sockets.on('connection', function(socket){
 	var socketid;
 	var name;
 	
-	console.log("spam");
-	
 	socket.on('playermove', function(x,y,name){
 		io.emit('playermove', x, y, name);
     });
 	
 	socket.on('chosenname', function(name, password){
-		socketid = 0;
-		
-		new User({'name': name})
-		.fetch()
-		.then(function(model) {
-			if (model == null) {
-				new User({'name': name, 'password': password, 'joined': new Date()}).save().then(function(mdl) {
-					socketid = mdl.get('id');
-					socket.emit('login');
-				});
-			}
-			else {
-				if (model.get('password') == password) {
-					socketid = model.get('id');
-					socket.emit('login');
+		if (hardcode_users.indexOf(name) > -1)
+			socket.emit('errors', 'User already logged in!');
+		else {
+			new User({'name': name})
+			.fetch()
+			.then(function(model) {
+				if (model == null) {
+					new User({'name': name, 'password': password, 'joined': new Date()}).save().then(function(mdl) {
+						socketid = mdl.get('id');
+						hardcode_users.push(name);
+						socket.emit('login');
+					});
 				}
 				else {
-					socket.emit('errors', 'Wrong password!');
-					playercount = playercount - 1;
+					if (model.get('password') == password) {
+						socketid = model.get('id');
+						hardcode_users.push(name);
+						socket.emit('login');
+					}
+					else {
+						socket.emit('errors', 'Wrong password!');
+						playercount = playercount - 1;
+					}
 				}
-			}
-			playercount = playercount + 1;
-		});
+				playercount = playercount + 1;
+			});
+		}
     });
 	
 	socket.on('chat message', function(name, msg, control) {
@@ -86,14 +90,16 @@ io.sockets.on('connection', function(socket){
 	});
 	
 	socket.on('disconnect', function() {
-
-		new User({'id': socketid})
-		.fetch()
-		.then(function(model) {
-			var name = model.get('name').replace(/`/g , "");
-			io.emit('chat message', name,'' + name + ' disconnected.', 'disconnect');
-			playercount = playercount - 1;
-		});
+		
+		if (socketid != null)
+			new User({'id': socketid})
+			.fetch()
+			.then(function(model) {
+				var name = model.get('name').replace(/`/g , "");
+				io.emit('chat message', name,'' + name + ' disconnected.', 'disconnect');
+				hardcode_users.splice(hardcode_users.indexOf(name), 1);
+				playercount = playercount - 1;
+			});
 		
 	});
 });

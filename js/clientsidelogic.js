@@ -47,6 +47,8 @@ function spawnPlayer(name, x, y) {
 	if (x != null ) {
 		fig.style.left = x + 'px';
 		fig.style.top = y + 'px';
+		player.style.height = 200 * (y/1014.0) + 'px';
+		player.style.width = 200 * (y/1014.0) + 'px';
 	}
 	fig.appendChild(player);
 	fig.appendChild(nametext);

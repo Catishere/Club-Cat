@@ -22,7 +22,7 @@
   
   .player {
 	  position: absolute;
-	  top: 300px;
+	  top: 50%;
 	  left: 300px;
 	  text-align: center;
   }
