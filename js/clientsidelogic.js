@@ -21,7 +21,10 @@ btn.onclick = function() {
 
 document.onclick = function() {
 	if (yourname != null && $('#'+yourname) != null) {
-		socket.emit('playermove', (event.clientX - 100 >= 0) ? event.clientX - 100 : 0, (event.clientY - 70 >= 0) ? event.clientY - 70 : 0, yourname);
+		var ratio = (event.clientY * 1.0) / window.screen.height;
+		var ratio2 = 150 * (event.clientY/1014.0);
+		if (ratio < 0.89 && ratio > 0.3 && event.clientX + event.clientY != 0)
+			socket.emit('playermove', (event.clientX - ratio2 >= 0) ? event.clientX - ratio2 : 0, (event.clientY - ratio2 >= 0) ? event.clientY - ratio2 : 0, yourname);
 	}
 }
 
@@ -48,6 +51,17 @@ function spawnPlayer(name, x, y) {
 	fig.appendChild(player);
 	fig.appendChild(nametext);
 	document.body.appendChild(fig);
+}
+
+function displayChat(name, message) {
+	var div = document.createElement("div");
+	var player = $("#" + name);
+	div.innerHTML = message + "\n\n";
+	div.className = "chat-bubble";
+	if (player.find('.chat-bubble').length)
+		player.find('.chat-bubble').remove();
+	player.prepend(div);
+	setTimeout(function(){ div.remove();}, 8000);
 }
 
 $('form').submit(function(){
@@ -86,7 +100,7 @@ socket.on('chat message', function(name, msg, control){
   else
   {
 	$('#messages').append($('<li>').text('' + name + ': ' + msg));
-
+	displayChat(name, msg);
   }
   var element = document.getElementById("messages");
   element.scrollTop = element.scrollHeight;
@@ -109,9 +123,13 @@ socket.on('playermove', function(x, y, name){
   } else {
 
 	var catplayer = $("#" + name);
+	var img = catplayer.find('img');
 	catplayer.stop();
-	var xMove = x - parseInt(catplayer.css("left"));
-	var yMove = y - parseInt(catplayer.css("top"));
+	img.stop();
+	var xpos = parseInt(catplayer.css("left"));
+	var ypos = parseInt(catplayer.css("top"));
+	var xMove = x - xpos;
+	var yMove = y - ypos;
 	
 	if (xMove >= 0) xMove = "+=" + xMove;
 	else xMove = "-=" + -xMove;
@@ -124,6 +142,11 @@ socket.on('playermove', function(x, y, name){
 			left: xMove,
 			top: yMove
 		}, "slow" );
+	
+	img.animate({
+		height: 200 * (y/1014.0),
+		width: 200 * (y/1014.0)
+	}, "slow");
   }
   var element = document.getElementById("messages");
   element.scrollTop = element.scrollHeight;

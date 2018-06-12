@@ -8,11 +8,11 @@
 	height: 100%;
 	overflow: auto;
 	background-color: rgb(0,0,0);
-	background-color: rgba(0,0,0,0.4);
+	background-color: rgba(0,0,0,0.8);
   }
 
   .modal-content {
-	background-color: #beefff;
+	background-color: #eab693;
 	margin: 15% auto; /* 15% from the top and centered */
 	padding: 20px;
 	border: 1px solid #888;
@@ -24,11 +24,11 @@
 	  position: absolute;
 	  top: 300px;
 	  left: 300px;
-	  width: 110px;
 	  text-align: center;
   }
   
   .error {
+	z-index: 10;
     width: 100%;
     background-color: red;
 	left:0px; 
@@ -37,18 +37,82 @@
 	font-weight: bold;
 	text-align: center;
     position: absolute;
-    animation-name: example;
+    animation-name: errorfade;
     animation-duration: 6s;
 }
 
-@keyframes example {
+@keyframes errorfade {
     0%  {background-color:red; height: 0px; opacity:0;}
 	30% {background-color:red; height: 50px; opacity:1;}
 	80% {background-color:red; height: 50px; opacity:1;}
 	100% {background-color:red; height: 0px; opacity:0;}
 }
 
-	body {
-		overflow: hidden;
-		background-image: url("/images/background.jpg");
-	}
+@keyframes bubblefade {
+    0%  {opacity:0;}
+	20% {opacity:1;}
+	85% {opacity:1;}
+	100% {opacity:0;}
+}
+
+ body, html {
+	overflow: hidden;
+	background-image: url("/images/background.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+	height: 100%;
+ }
+ 
+ a {
+	 font-family: Arial, Helvetica, sans-serif;
+ }
+ 
+ #messages {position:relative; width: 100%; height: 85%; margin: 0; padding: 0; padding-bottom: 20px;}
+ #messages li { padding: 5px 10px; }
+ #messages li:nth-child(odd) { background: #86bfd2; }
+ #messages {overflow: scroll; overflow-x: hidden;}
+ 
+ .chat {
+	 position: absolute;
+	 bottom: 0;
+	 width: 33%;
+	 height: 20px;
+	 background-color: red;
+ }
+ 
+ .chat:focus {
+	 height: 25px:
+ }
+ 
+ .chat-input {
+	 height: 20px;
+ }
+ 
+ .chat-messages {
+	 
+ }
+ 
+ figcaption {
+	 font-family: "Arial Black", Gadget, sans-serif;
+	 color: white;
+     text-shadow: 1px 1px 2px black, 0 0 25px blue, 0 0 5px darkblue;
+ }
+ 
+ .chat-bubble {
+  flex: 1;
+  background-color: #EEEEEE;
+  border-radius: 15%;
+  border-style: outset;
+  text-align: center;
+  position: absolute;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  padding: 5px;
+  animation-name: bubblefade;
+  animation-duration: 8s;
+  max-width: 150px;
+  margin-bottom: 50px;
+  word-break: break-word;
+}
+ 
+ 
