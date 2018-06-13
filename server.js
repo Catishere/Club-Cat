@@ -46,7 +46,9 @@ io.sockets.on('connection', function(socket){
 	socket.on('chosenname', function(name, password){
 		if (hardcode_users.indexOf(name) > -1)
 			socket.emit('errors', 'User already logged in!');
-		else {
+		else if (name.indexOf(" ") > -1){
+			socket.emit('errors', 'Dont cheat cunt!');
+		} else {
 			new User({'name': name})
 			.fetch()
 			.then(function(model) {

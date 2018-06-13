@@ -100,8 +100,9 @@
  
  .chat-bubble {
   flex: 1;
+  z-index: 2;
   background-color: #EEEEEE;
-  border-radius: 15%;
+  border-radius: 20%;
   border-style: outset;
   text-align: center;
   position: absolute;
@@ -111,6 +112,7 @@
   animation-name: bubblefade;
   animation-duration: 8s;
   max-width: 150px;
+  min-width: 100px;
   margin-bottom: 50px;
   word-break: break-word;
 }

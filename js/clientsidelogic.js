@@ -81,16 +81,21 @@ $('form').submit(function(){
 });
 
 socket.on('spawn', function(target, name, x, y){
-	if (yourname == target && target != name) spawnPlayer(name, x, y);
+	if (yourname != null) {
+		if (yourname == target) {
+			spawnPlayer(name, x, y);
+		} else if (target == 'A L L') {
+			spawnPlayer(name, x, y);
+			if (name != yourname) {
+				var catplayer = $('#' + yourname);
+				socket.emit('reqspawn', name, yourname, parseInt(catplayer.css("left")), parseInt(catplayer.css("top")));
+			}
+		}
+	}
 });
 
 socket.on('chat message', function(name, msg, control){
   
-  if (control == 'join') {
-	spawnPlayer(name, null, null);
-	var catplayer = $('#' + yourname);
-	socket.emit('reqspawn', name, yourname, parseInt(catplayer.css("left")), parseInt(catplayer.css("top")));
-  }
   if (control == 'disconnect') {
 	  console.log("disappear please");
 	  $('#'+name).remove();
@@ -115,7 +120,7 @@ socket.on('errors', function(message){
 socket.on('login', function(){
 	modal.style.display = "none"
 	yourname = $('#username').val();
-	socket.emit('chat message', yourname, '' + yourname + ' joined.', 'join');
+	socket.emit('reqspawn', 'A L L', yourname, null, null);
 	$('#username').val('');
 });
 
@@ -124,6 +129,7 @@ socket.on('playermove', function(x, y, name){
 	console.log("Error, player is not found");
   } else {
 
+	var speed = 2.85;
 	var catplayer = $("#" + name);
 	var img = catplayer.find('img');
 	catplayer.stop();
@@ -132,6 +138,11 @@ socket.on('playermove', function(x, y, name){
 	var ypos = parseInt(catplayer.css("top"));
 	var xMove = x - xpos;
 	var yMove = y - ypos;
+	var absXMove = Math.abs(xMove);
+	var absYMove = Math.abs(yMove);
+	var xyMove = Math.sqrt(absXMove*absXMove + absYMove*absYMove);
+	var flip = (xMove < 0) ? 1:-1;
+	img.css("transform", "scaleX("+ flip +")");
 	
 	if (xMove >= 0) xMove = "+=" + xMove;
 	else xMove = "-=" + -xMove;
@@ -143,12 +154,12 @@ socket.on('playermove', function(x, y, name){
 	$( "#" + name ).animate({
 			left: xMove,
 			top: yMove
-		}, "slow" );
+		}, Math.round(xyMove * speed), "linear");
 	
 	img.animate({
-		height: 200 * (y/1014.0),
-		width: 200 * (y/1014.0)
-	}, "slow");
+		height: y * 0.238 - 41.32,
+		width: y * 0.238 - 41.32
+	}, Math.round(xyMove * speed), "linear");
   }
   var element = document.getElementById("messages");
   element.scrollTop = element.scrollHeight;
