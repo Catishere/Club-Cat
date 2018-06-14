@@ -1,7 +1,7 @@
   .modal {
 	display: inline-block; 
 	position: fixed;
-	z-index: 1;
+	z-index: 9;
 	left: 0;
 	top: 0;
 	width: 100%;
@@ -22,9 +22,25 @@
   
   .player {
 	  position: absolute;
+	  z-index: 3;
 	  top: 50%;
 	  left: 300px;
+	  margin: 0;
 	  text-align: center;
+  }
+  
+  .object-bellow-player {
+	  z-index: 2;
+  }
+  
+  .object-above-player {
+	  z-index: 4;
+  }
+  
+  .object {
+	  position: absolute;
+	  top: 0px;
+	  left: 0px;
   }
   
   .error {
@@ -75,6 +91,7 @@
  .chat {
 	 position: absolute;
 	 bottom: 0;
+	 z-index: 8;
 	 width: 33%;
 	 height: 20px;
 	 background-color: red;
@@ -100,7 +117,7 @@
  
  .chat-bubble {
   flex: 1;
-  z-index: 2;
+  z-index: 5;
   background-color: #EEEEEE;
   border-radius: 20%;
   border-style: outset;

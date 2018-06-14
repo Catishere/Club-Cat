@@ -39,8 +39,8 @@ io.sockets.on('connection', function(socket){
 	var socketid;
 	var name;
 	
-	socket.on('playermove', function(x,y,name){
-		io.emit('playermove', x, y, name);
+	socket.on('playermove', function(x,y,name, control){
+		io.emit('playermove', x, y, name, control);
     });
 	
 	socket.on('chosenname', function(name, password){

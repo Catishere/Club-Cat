@@ -2,6 +2,9 @@ var modal = document.getElementById('myModal');
 var btn = document.getElementById("myBtn");
 var socket = io();
 var yourname;
+var objects;
+
+prepareRoom("mars");
 
 btn.onclick = function() {
 	var username = $('#username').val();
@@ -18,13 +21,11 @@ btn.onclick = function() {
 	}
 }
 
-
 document.onclick = function() {
 	if (yourname != null && $('#'+yourname) != null) {
 		var ratio = (event.clientY * 1.0) / window.screen.height;
-		var ratio2 = 150 * (event.clientY/1014.0);
 		if (ratio < 0.89 && ratio > 0.3 && event.clientX + event.clientY != 0)
-			socket.emit('playermove', (event.clientX - ratio2 >= 0) ? event.clientX - ratio2 : 0, (event.clientY - ratio2 >= 0) ? event.clientY - ratio2 : 0, yourname);
+			socket.emit('playermove', event.clientX, event.clientY, yourname, null);
 	}
 }
 
@@ -36,10 +37,73 @@ function displayError(message) {
 	setTimeout(function(){ div.remove(); }, 6000);
 }
 
+function prepareRoom(room) {
+	
+	switch(room) { // needs separate object creation for easier object addition
+    case "mars":
+		createObject("teleport_left", "teleport.png", true, "100px", "500px");
+        createObject("teleport_right", "teleport.png", true, "1700px", "500px");
+        break;
+    case "earth":
+        break;
+    default:
+        console.log("unknown room");
+	}
+	
+	do {
+		objects = $(".object").toArray();
+	} while (objects.length < 2);
+		
+}
+
+function createObject(name, decal, type, x, y) { /*x, y - string N% Npx etc.*/
+	var object = document.createElement("img");
+	object.id = name;
+	object.className = (type) ? "object object-below-player" : "object object-above-player";  //true - under, false - above;
+	object.src = "images/" + decal;
+	object.style.left = x;
+	object.style.top = y;
+	document.body.appendChild(object);
+}
+
+function playerObjectCollision(x, y) {
+	var result = null;
+	$.each(objects, function(index, item) {
+		var objX = Number(item.x);
+		var objY = Number(item.y);
+		var objEndX = objX + Number(item.width);
+		var objEndY = objY + Number(item.height);
+		
+		if (x > objX && y > objY && x < objEndX  && y < objEndY) {
+			result = item.id;
+			return false;
+		}
+	});
+	return result;
+}
+
+function checkAction(name, x, y) {
+	var objectTrigger = playerObjectCollision(x, y);
+	var object = $('#' + objectTrigger);
+	var objPos = object.position();
+	
+	if (yourname == name) {
+		
+		if (objectTrigger == "teleport_right") {
+			var destPos = $("#teleport_left").position();
+			socket.emit('playermove', destPos.left + 100, destPos.top + 100, yourname, "instant");
+		}
+	} else {
+		//Do stuff for other players' actions
+	}
+}
+
 function spawnPlayer(name, x, y) {
 	var fig = document.createElement("figure");
 	var player = document.createElement("img");
 	var nametext = document.createElement("figcaption");
+	var size = y * 0.266 - 46.402;
+	console.log("y in player spawn: " + y);
 	fig.id = name;
 	player.src = "images/cat.png";
 	fig.className = "player";
@@ -47,8 +111,8 @@ function spawnPlayer(name, x, y) {
 	if (x != null ) {
 		fig.style.left = x + 'px';
 		fig.style.top = y + 'px';
-		player.style.height = 200 * (y/1014.0) + 'px';
-		player.style.width = 200 * (y/1014.0) + 'px';
+		player.style.height = size + 'px';
+		player.style.width = size + 'px';
 	}
 	fig.appendChild(player);
 	fig.appendChild(nametext);
@@ -88,7 +152,7 @@ socket.on('spawn', function(target, name, x, y){
 			spawnPlayer(name, x, y);
 			if (name != yourname) {
 				var catplayer = $('#' + yourname);
-				socket.emit('reqspawn', name, yourname, parseInt(catplayer.css("left")), parseInt(catplayer.css("top")));
+				socket.emit('reqspawn', name, yourname, catplayer.position().left, catplayer.position().top);
 			}
 		}
 	}
@@ -124,12 +188,16 @@ socket.on('login', function(){
 	$('#username').val('');
 });
 
-socket.on('playermove', function(x, y, name){
-  if (name == null) {
-	console.log("Error, player is not found");
-  } else {
+socket.on('playermove', function(x, y, name, control){
+	if (name == null) {
+		console.log("Error, player is not found");
+	} else {
 
 	var speed = 2.85;
+	var size = y * 0.238 - 41.32;
+	console.log("y in player move: " + y);
+	x = x - size/2;
+	y = y - size/2;
 	var catplayer = $("#" + name);
 	var img = catplayer.find('img');
 	catplayer.stop();
@@ -150,16 +218,19 @@ socket.on('playermove', function(x, y, name){
 	if (yMove >= 0) yMove = "+=" + yMove;
 	else yMove = "-=" + -yMove;
 	
+	var realSpeed = (control == "instant") ? 0 : Math.round(xyMove * speed);
 	
-	$( "#" + name ).animate({
+	catplayer.animate({
 			left: xMove,
 			top: yMove
-		}, Math.round(xyMove * speed), "linear");
+		}, realSpeed, "linear", function() {
+			checkAction(name, x, y);
+	});
 	
 	img.animate({
-		height: y * 0.238 - 41.32,
-		width: y * 0.238 - 41.32
-	}, Math.round(xyMove * speed), "linear");
+		height: size,
+		width: size
+	}, realSpeed, "linear");
   }
   var element = document.getElementById("messages");
   element.scrollTop = element.scrollHeight;
