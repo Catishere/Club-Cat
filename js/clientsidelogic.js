@@ -103,9 +103,10 @@ function spawnPlayer(name, x, y) {
 	var player = document.createElement("img");
 	var nametext = document.createElement("figcaption");
 	var size = y * 0.266 - 46.402;
-	console.log("y in player spawn: " + y);
 	fig.id = name;
-	player.src = "images/cat.png";
+	player.src = "images/cat2.png";
+	player.style.height = "100px";
+	player.style.width = "100px";
 	fig.className = "player";
 	nametext.innerHTML = name;
 	if (x != null ) {
@@ -192,7 +193,10 @@ socket.on('playermove', function(x, y, name, control){
 	if (name == null) {
 		console.log("Error, player is not found");
 	} else {
-
+		
+	catplayer.stop();
+	img.stop();
+	
 	var speed = 2.85;
 	var size = y * 0.238 - 41.32;
 	console.log("y in player move: " + y);
@@ -200,8 +204,7 @@ socket.on('playermove', function(x, y, name, control){
 	y = y - size/2;
 	var catplayer = $("#" + name);
 	var img = catplayer.find('img');
-	catplayer.stop();
-	img.stop();
+
 	var xpos = parseInt(catplayer.css("left"));
 	var ypos = parseInt(catplayer.css("top"));
 	var xMove = x - xpos;
