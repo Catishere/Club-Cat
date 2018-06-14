@@ -21,19 +21,23 @@ btn.onclick = function() {
 	}
 }
 
-document.onclick = function() {
+$('#game-container').click(function() {
+	var offset = $('.game').offset();
+	var x = event.clientX - offset.left;
+	var y = event.clientY - offset.top;
+
 	if (yourname != null && $('#'+yourname) != null) {
-		var ratio = (event.clientY * 1.0) / window.screen.height;
-		if (ratio < 0.89 && ratio > 0.3 && event.clientX + event.clientY != 0)
-			socket.emit('playermove', event.clientX, event.clientY, yourname, null);
-	}
-}
+		var ratio = (y * 1.0) / 768;
+		if (ratio < 0.95 && ratio > 0.3 && x + y != 0)
+			socket.emit('playermove', x, y, yourname, null);
+	}	 
+});
 
 function displayError(message) {
 	var div = document.createElement("div");
 	div.innerHTML = message;
 	div.className = "error";
-	document.body.appendChild(div);
+	$(".game").append(div);
 	setTimeout(function(){ div.remove(); }, 6000);
 }
 
@@ -41,8 +45,8 @@ function prepareRoom(room) {
 	
 	switch(room) { // needs separate object creation for easier object addition
     case "mars":
-		createObject("teleport_left", "teleport.png", true, "100px", "500px");
-        createObject("teleport_right", "teleport.png", true, "1700px", "500px");
+		createObject("teleport_left", "teleport.png", true, "0%", "40%");
+        createObject("teleport_right", "teleport.png", true, "85%", "40%");
         break;
     case "earth":
         break;
@@ -51,7 +55,7 @@ function prepareRoom(room) {
 	}
 	
 	do {
-		objects = $(".object").toArray();
+		objects = $(".object");
 	} while (objects.length < 2);
 		
 }
@@ -63,19 +67,19 @@ function createObject(name, decal, type, x, y) { /*x, y - string N% Npx etc.*/
 	object.src = "images/" + decal;
 	object.style.left = x;
 	object.style.top = y;
-	document.body.appendChild(object);
+	$(".game").append(object);
 }
 
 function playerObjectCollision(x, y) {
 	var result = null;
-	$.each(objects, function(index, item) {
-		var objX = Number(item.x);
-		var objY = Number(item.y);
-		var objEndX = objX + Number(item.width);
-		var objEndY = objY + Number(item.height);
-		
+	objects.each(function(i) {
+		var pos = $(this).position();
+		var objX = Number(pos.left);
+		var objY = Number(pos.top);
+		var objEndX = objX + Number($(this).width());
+		var objEndY = objY + Number($(this).height());
 		if (x > objX && y > objY && x < objEndX  && y < objEndY) {
-			result = item.id;
+			result = $(this).attr('id');
 			return false;
 		}
 	});
@@ -117,7 +121,7 @@ function spawnPlayer(name, x, y) {
 	}
 	fig.appendChild(player);
 	fig.appendChild(nametext);
-	document.body.appendChild(fig);
+	$(".game").append(fig);
 }
 
 function displayChat(name, message) {
@@ -197,7 +201,6 @@ socket.on('playermove', function(x, y, name, control){
 
 	var speed = 2.85;
 	var size = y * 0.238 - 41.32;
-	console.log("y in player move: " + y);
 	x = x - size/2;
 	y = y - size/2;
 	var catplayer = $("#" + name);
