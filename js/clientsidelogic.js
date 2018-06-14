@@ -194,9 +194,7 @@ socket.on('playermove', function(x, y, name, control){
 		console.log("Error, player is not found");
 	} else {
 		
-	catplayer.stop();
-	img.stop();
-	
+
 	var speed = 2.85;
 	var size = y * 0.238 - 41.32;
 	console.log("y in player move: " + y);
@@ -205,6 +203,9 @@ socket.on('playermove', function(x, y, name, control){
 	var catplayer = $("#" + name);
 	var img = catplayer.find('img');
 
+	catplayer.stop();
+	img.stop();
+	
 	var xpos = parseInt(catplayer.css("left"));
 	var ypos = parseInt(catplayer.css("top"));
 	var xMove = x - xpos;
