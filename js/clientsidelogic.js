@@ -3,8 +3,9 @@ var btn = document.getElementById("myBtn");
 var socket = io();
 var yourname;
 var objects;
+var messageSound;
 
-prepareRoom("mars");
+initPage();
 
 btn.onclick = function() {
 	var username = $('#username').val();
@@ -39,6 +40,11 @@ function displayError(message) {
 	div.className = "error";
 	$(".game").append(div);
 	setTimeout(function(){ div.remove(); }, 6000);
+}
+
+function initPage() {
+	prepareRoom("mars");
+	messageSound = new Audio('sound/new_message_sound.mp3');
 }
 
 function prepareRoom(room) {
@@ -135,6 +141,7 @@ function displayChat(name, message) {
 	console.log(marginres);
 	div.style.marginTop = "-" + marginres + "px";
 	player.prepend(div);
+	messageSound.play();
 	setTimeout(function(){ div.remove();}, 7950);
 }
 
