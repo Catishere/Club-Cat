@@ -109,8 +109,8 @@ function spawnPlayer(name, x, y) {
 	var size = y * 0.266 - 46.402;
 	fig.id = name;
 	player.src = "images/cat2.png";
-	player.style.height = "100px";
-	player.style.width = "100px";
+	player.style.height = "60px";
+	player.style.width = "60px";
 	fig.className = "player";
 	nametext.innerHTML = name;
 	if (x != null ) {
@@ -128,11 +128,14 @@ function displayChat(name, message) {
 	var div = document.createElement("div");
 	var player = $("#" + name);
 	div.innerHTML = message + "\n\n";
-	div.className = "chat-bubble";
+	div.className = "chat-bubble tri-right btm-left-in";
 	if (player.find('.chat-bubble').length)
 		player.find('.chat-bubble').remove();
+	var marginres = 50 + 25 * (message.length/10);
+	console.log(marginres);
+	div.style.marginTop = "-" + marginres + "px";
 	player.prepend(div);
-	setTimeout(function(){ div.remove();}, 8000);
+	setTimeout(function(){ div.remove();}, 7950);
 }
 
 $('form').submit(function(){

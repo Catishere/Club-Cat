@@ -126,22 +126,51 @@
      text-shadow: 1px 1px 2px black, 0 0 25px blue, 0 0 5px darkblue;
  }
  
+ .tri-right.border.btm-left-in:before {
+	content: ' ';
+	position: absolute;
+	width: 0;
+	height: 0;
+	left: 30px;
+	right: auto;
+	top: auto;
+	bottom: 40px;
+	border-style: outset;
+	border: 20px solid;
+	border-color: #666 transparent transparent #666;
+}
+
+.tri-right.btm-left-in:after{
+	content: ' ';
+	position: absolute;
+	width: 0;
+	height: 0;
+	left: 38px;
+	right: auto;
+	top: auto;
+	bottom: -20px;
+	border: 12px solid;
+	border-style: outset;
+	border-color: #EEEEEE transparent transparent #EEEEEE;
+}
+ 
  .chat-bubble {
   flex: 1;
   z-index: 5;
   background-color: #EEEEEE;
-  border-radius: 20%;
+  border-radius: 30px;
   border-style: outset;
   text-align: center;
   position: absolute;
-  font-family: Arial, Helvetica, sans-serif;
+  display: block;
+  font-family: Consolas, monaco, monospace;
   font-size: 20px;
   padding: 5px;
+  margin: 0 0 0 -25px;
   animation-name: bubblefade;
   animation-duration: 8s;
   max-width: 150px;
   min-width: 100px;
-  margin-bottom: 50px;
   word-break: break-word;
 }
  
