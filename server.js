@@ -43,34 +43,40 @@ io.sockets.on('connection', function(socket){
 		io.emit('playermove', x, y, name, control);
     });
 	
-	socket.on('chosenname', function(name, password){
+	socket.on('attemptlogin', function(name, password, register){
 		if (hardcode_users.indexOf(name) > -1)
 			socket.emit('errors', 'User already logged in!');
-		else if (name.indexOf(" ") > -1){
+		else if (!name.match(/^[0-9a-zA-Z]{1,16}$/)){
 			socket.emit('errors', 'Dont cheat cunt!');
 		} else {
 			new User({'name': name})
 			.fetch()
 			.then(function(model) {
 				if (model == null) {
-					new User({'name': name, 'password': password, 'joined': new Date()}).save().then(function(mdl) {
-						socketid = mdl.get('id');
-						hardcode_users.push(name);
-						socket.emit('login');
-					});
+					if (register)
+						new User({'name': name, 'password': password, 'joined': new Date()}).save().then(function(mdl) {
+							socketid = mdl.get('id');
+							hardcode_users.push(name);
+							playercount = playercount + 1;
+							socket.emit('login');
+						});
+					else
+						socket.emit('errors', 'Account doesnt exist!');
 				}
-				else {
+				else if (!register) {
 					if (model.get('password') == password) {
 						socketid = model.get('id');
 						hardcode_users.push(name);
 						socket.emit('login');
+						playercount = playercount + 1;
 					}
 					else {
 						socket.emit('errors', 'Wrong password!');
-						playercount = playercount - 1;
 					}
 				}
-				playercount = playercount + 1;
+				else {
+					socket.emit('errors', 'Account already exists!');
+				}
 			});
 		}
     });

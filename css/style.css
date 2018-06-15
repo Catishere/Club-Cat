@@ -29,6 +29,11 @@
 	  text-align: center;
   }
   
+  .button {
+	  font-size: medium;
+	  width: 45%;
+  }
+  
   .object-bellow-player {
 	  z-index: 2;
   }

@@ -1,22 +1,29 @@
-var modal = document.getElementById('myModal');
-var btn = document.getElementById("myBtn");
 var socket = io();
 var yourname;
 var objects;
 var messageSound;
 var mute = false;
+
 initPage();
 
-btn.onclick = function() {
+$('#login').click(function() {
+	loginHandle(false);
+});
+
+$('#register').click(function() {
+	loginHandle(true);
+});
+
+function loginHandle(register) {
 	var username = $('#username').val();
 	var password = $('#password').val();
 	
 	if (username != '' && password != '')
 	{
-		if (username.indexOf(" ") === -1)
-			socket.emit('chosenname', username, password);
+		if (username.match(/^[0-9a-zA-Z]{1,16}$/))
+			socket.emit('attemptlogin', username, password, register);
 		else
-			displayError("You cant have spaces in your username!");
+			displayError("Incorrect username!");
 	} else {
 		displayError("Enter username and password!");
 	}
@@ -212,7 +219,7 @@ socket.on('errors', function(message){
 });
 
 socket.on('login', function(){
-	modal.style.display = "none"
+	$("#myModal").hide();
 	yourname = $('#username').val();
 	socket.emit('reqspawn', 'A L L', yourname, null, null);
 	$('#username').val('');
