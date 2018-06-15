@@ -47,6 +47,7 @@
 	  float: right;
 	  position: fixed;
 	  margin: 10px;
+	  z-index: 8;
   }
   
   .muteButton:hover {
