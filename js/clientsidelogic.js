@@ -4,7 +4,7 @@ var socket = io();
 var yourname;
 var objects;
 var messageSound;
-
+var mute = false;
 initPage();
 
 btn.onclick = function() {
@@ -34,6 +34,11 @@ $('#game-container').click(function() {
 	}	 
 });
 
+function playAudio(audio) {
+	if (!mute)
+		audio.play();
+}
+
 function displayError(message) {
 	var div = document.createElement("div");
 	div.innerHTML = message;
@@ -45,6 +50,17 @@ function displayError(message) {
 function initPage() {
 	prepareRoom("mars");
 	messageSound = new Audio('sound/new_message_sound.mp3');
+	
+	$( "#muteButton" ).click( function() {
+		if (mute) {
+			$("#muteButton").attr('src', '/images/unmute.png');
+			mute = false;
+		}
+		else {
+			$("#muteButton").attr('src', '/images/mute.png');
+			mute = true;
+		}
+	});
 }
 
 function prepareRoom(room) {
@@ -138,10 +154,9 @@ function displayChat(name, message) {
 	if (player.find('.chat-bubble').length)
 		player.find('.chat-bubble').remove();
 	var marginres = 50 + 25 * (message.length/10);
-	console.log(marginres);
 	div.style.marginTop = "-" + marginres + "px";
 	player.prepend(div);
-	messageSound.play();
+	playAudio(messageSound);
 	setTimeout(function(){ div.remove();}, 7950);
 }
 

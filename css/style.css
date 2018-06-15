@@ -43,6 +43,20 @@
 	  left: 0px;
   }
   
+  .muteButton {
+	  float: right;
+	  position: fixed;
+	  margin: 10px;
+  }
+  
+  .muteButton:hover {
+	  float: right;
+	  position: absolute;
+	  width: 40px;
+	  height: 40px;
+	  margin: 6px;
+  }
+  
   .error {
 	z-index: 10;
     width: 100%;
