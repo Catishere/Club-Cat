@@ -14,6 +14,10 @@ $('#register').click(function() {
 	loginHandle(true);
 });
 
+$('#toggleChat').click(function() {
+	$("#chatlog").toggle();
+});
+
 function loginHandle(register) {
 	var username = $('#username').val();
 	var password = $('#password').val();
@@ -163,7 +167,7 @@ function displayChat(name, message) {
 	var marginres = 50 + 25 * (message.length/10);
 	div.style.marginTop = "-" + marginres + "px";
 	player.prepend(div);
-	playAudio(messageSound);
+	if (name != yourname) playAudio(messageSound);
 	setTimeout(function(){ div.remove();}, 7950);
 }
 
@@ -174,8 +178,12 @@ $('form').submit(function(){
   }
   else 
   {
-	if ($('#m').val() != '')
-	  socket.emit('chat message', yourname, $('#m').val());
+	if ($('#m').val().match(/^[-!@#$%^&*()_+|~={}\[\]:;<>?,.\/0-9a-zA-Z ]{1,80}$/))
+	{
+		socket.emit('chat message', yourname, $('#m').val());
+		$('#m').focus();
+	}else 
+		displayError("Invalid Message!");
 	$('#m').val('');
   }
 	  return false;
@@ -222,6 +230,7 @@ socket.on('login', function(){
 	$("#myModal").hide();
 	yourname = $('#username').val();
 	socket.emit('reqspawn', 'A L L', yourname, null, null);
+	socket.emit('chat message', null, yourname + " joined.", 'join');
 	$('#username').val('');
 });
 

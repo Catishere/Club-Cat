@@ -21,11 +21,14 @@
 		  </form>
 		</div>
 		<img id="muteButton" class="muteButton" src="images/unmute.png"></img>
+		<div id="chatlog" class="chatlog">
+			<ul id="messages"></ul>
+		</div>
 		<div class="chat">
-			<ul id="messages" style="display:none"></ul>
-			<form id="sendform" action="" style="width: 33%; height: 80%;">
+			<form id="sendform" style="width: 33%; height: 80%;">
 				<input id="m" autocomplete="off" style="width:80%; height: 80%; margin: 1%;"/><button class= "myButton" style="width:15%; height: 90%;  margin: 1%;">Send</button>
 			</form>
+			<button id="toggleChat" class="chatlog-button">Chat Log</button>
 		</div>
 	</div>
 	<script type="text/javascript" src="js/clientsidelogic.js"></script>
