@@ -3,6 +3,7 @@ var yourname;
 var objects;
 var messageSound;
 var mute = false;
+var currentRoom = null;
 
 initPage();
 
@@ -59,7 +60,7 @@ function displayError(message) {
 }
 
 function initPage() {
-	prepareRoom("mars");
+	
 	messageSound = new Audio('sound/new_message_sound.mp3');
 	
 	$( "#muteButton" ).click( function() {
@@ -74,23 +75,77 @@ function initPage() {
 	});
 }
 
+function spawnLocation(lastRoom) {
+	var spawn = {};
+	
+	switch(currentRoom) {
+		case "mars":
+		if (lastRoom == "earth") {
+			var pos = $('#teleport_right').position();
+			spawn.x = pos.left - 50;
+			spawn.y = pos.top + 100;
+		} else if (lastRoom == null) {
+			var pos = $("#teleport_left").position();
+			spawn.x = pos.left + 250; 
+			spawn.y = pos.top + 100;
+		}
+		break;
+		
+		case "earth":
+			if (lastRoom == "mars") {
+				var pos = $("#teleport_left").position();
+				spawn.x = pos.left + 250; 
+				spawn.y = pos.top + 100;
+			}
+		break;
+	}
+	return spawn;
+}
+
 function prepareRoom(room) {
+	
+	var objectlen = 0;
+
+	if (currentRoom == room) {
+		return true;
+	}
+	
+	if (currentRoom != null)
+		socket.emit('leaveroom', currentRoom, yourname);
+	
+	var lastRoom = currentRoom;
+	currentRoom = room;
+	
+	if (yourname != null) socket.emit('joinroom', room, yourname);
+	
+    $('.object').remove();
+	$('.player').remove();
+	
+	$('.game').css('background-image', 'url("/images/'+ room +'.jpg")');
 	
 	switch(room) { // needs separate object creation for easier object addition
     case "mars":
 		createObject("teleport_left", "teleport.png", true, "0%", "40%");
         createObject("teleport_right", "teleport.png", true, "85%", "40%");
+		objectlen = 2;
+
         break;
     case "earth":
+		createObject("teleport_left", "teleport.png", true, "0%", "40%");
+        createObject("teleport_right", "teleport.png", true, "85%", "40%");
+		objectlen = 2;
+
         break;
     default:
-        console.log("unknown room");
+		console.log("unknown room");
 	}
 	
 	do {
 		objects = $(".object");
-	} while (objects.length < 2);
-		
+	} while (objects.length < objectlen);
+	
+	var spawn = spawnLocation(lastRoom);
+	socket.emit('reqspawn', ' ' + currentRoom, yourname, spawn.x , spawn.y);
 }
 
 function createObject(name, decal, type, x, y) { /*x, y - string N% Npx etc.*/
@@ -119,20 +174,24 @@ function playerObjectCollision(x, y) {
 	return result;
 }
 
-function checkAction(name, x, y) {
-	var objectTrigger = playerObjectCollision(x, y);
-	var object = $('#' + objectTrigger);
-	var objPos = object.position();
+function executeObjectAction(name, objectTrigger) {
 	
-	if (yourname == name) {
-		
-		if (objectTrigger == "teleport_right") {
-			var destPos = $("#teleport_left").position();
-			socket.emit('playermove', destPos.left + 100, destPos.top + 100, yourname, "instant");
-		}
-	} else {
-		//Do stuff for other players' actions
+	//var object = $('#' + objectTrigger);
+	//var objPos = object.position();
+	var isYou = (name == yourname);
+	switch (objectTrigger) {
+		case "teleport_right":
+			if (isYou) prepareRoom("earth");
+			break;
+		case "teleport_left":
+			if (isYou) prepareRoom("mars");
+			break;
+		default:
 	}
+}
+
+function checkAction(name, x, y) {
+	executeObjectAction(name, playerObjectCollision(x, y));
 }
 
 function spawnPlayer(name, x, y) {
@@ -180,7 +239,7 @@ $('form').submit(function(){
   {
 	if ($('#m').val().match(/^[-!@#$%^&*()_+|~={}\[\]:;<>?,.\/0-9a-zA-Z ]{1,80}$/))
 	{
-		socket.emit('chat message', yourname, $('#m').val());
+		socket.emit('chat message', yourname, $('#m').val(), currentRoom);
 		$('#m').focus();
 	}else 
 		displayError("Invalid Message!");
@@ -201,6 +260,10 @@ socket.on('spawn', function(target, name, x, y){
 			}
 		}
 	}
+});
+
+socket.on('playerleftroom', function (name) {
+	$("#" + name).remove();
 });
 
 socket.on('chat message', function(name, msg, control){
@@ -229,8 +292,7 @@ socket.on('errors', function(message){
 socket.on('login', function(){
 	$("#myModal").hide();
 	yourname = $('#username').val();
-	socket.emit('reqspawn', 'A L L', yourname, null, null);
-	socket.emit('chat message', null, yourname + " joined.", 'join');
+	prepareRoom("mars");
 	$('#username').val('');
 });
 

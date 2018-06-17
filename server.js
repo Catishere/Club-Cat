@@ -30,7 +30,7 @@ var User = bookshelf.Model.extend({
   tableName: 'user'
 });
 
-var hardcode_users = [];
+var hardcode_users = {};
 
 var playercount = 0;
 
@@ -39,12 +39,24 @@ io.sockets.on('connection', function(socket){
 	var socketid;
 	var name;
 	
+	socket.join("mars");
+	
 	socket.on('playermove', function(x,y,name, control){
 		io.emit('playermove', x, y, name, control);
     });
 	
+	socket.on('joinroom', function(room, name) {
+		hardcode_users[name] = room;
+		socket.join(room);
+	});
+	
+	socket.on('leaveroom', function(room, name) {
+		io.to(room).emit("playerleftroom", name);
+		socket.leave(room);
+	});
+	
 	socket.on('attemptlogin', function(name, password, register){
-		if (hardcode_users.indexOf(name) > -1)
+		if (hardcode_users.name != null)
 			socket.emit('errors', 'User already logged in!');
 		else if (!name.match(/^[0-9a-zA-Z]{1,16}$/)){
 			socket.emit('errors', 'Dont cheat cunt!');
@@ -56,9 +68,11 @@ io.sockets.on('connection', function(socket){
 					if (register)
 						new User({'name': name, 'password': password, 'joined': new Date()}).save().then(function(mdl) {
 							socketid = mdl.get('id');
-							hardcode_users.push(name);
+							hardcode_users[name] = 'mars';
 							playercount = playercount + 1;
 							socket.emit('login');
+							
+							io.to('mars').emit('chat message', null, name + " joined.", null);
 						});
 					else
 						socket.emit('errors', 'Account doesnt exist!');
@@ -66,8 +80,9 @@ io.sockets.on('connection', function(socket){
 				else if (!register) {
 					if (model.get('password') == password) {
 						socketid = model.get('id');
-						hardcode_users.push(name);
+						hardcode_users[name] = 'mars';
 						socket.emit('login');
+						io.to('mars').emit('chat message', null, name + " joined.", null);
 						playercount = playercount + 1;
 					}
 					else {
@@ -82,19 +97,24 @@ io.sockets.on('connection', function(socket){
     });
 	
 	socket.on('chat message', function(name, msg, control) {
+		
+		
 		if (msg == "!points")
 		{
 			new User({'name': name})
 			.fetch()
 			.then(function(model) {
-				io.emit('chat message',null,'' + name + ' has ' + model.get('points') + ' points.', null);
+				io.to(control).emit('chat message',null,'' + name + ' has ' + model.get('points') + ' points.', null);
 			});
 		}
-		io.emit('chat message', name, msg, control);
+		io.to(control).emit('chat message', name, msg, null);
 	});
 	
 	socket.on('reqspawn', function(target, name, x, y) {
-		io.emit('spawn', target, name, x, y);
+		if (target.startsWith(' ')) {
+			io.to(target.substr(1)).emit('spawn', 'A L L', name, x, y);
+		} else
+			io.emit('spawn', target, name, x, y);
 	});
 	
 	socket.on('disconnect', function() {
@@ -105,7 +125,7 @@ io.sockets.on('connection', function(socket){
 			.then(function(model) {
 				var name = model.get('name').replace(/`/g , "");
 				io.emit('chat message', name,'' + name + ' disconnected.', 'disconnect');
-				hardcode_users.splice(hardcode_users.indexOf(name), 1);
+				delete hardcode_users[name];
 				playercount = playercount - 1;
 			});
 		
