@@ -155,6 +155,7 @@ function createObject(name, decal, type, x, y) { /*x, y - string N% Npx etc.*/
     object.src = "images/" + decal;
     object.style.left = x;
     object.style.top = y;
+    object.draggable = false;
     $(".game").append(object);
 }
 
@@ -202,6 +203,7 @@ function spawnPlayer(name, x, y) {
     fig.id = name;
     player.src = "images/cat2.png";
     player.style.height = "60px";
+    player.draggable = false;
     player.style.width = "60px";
     fig.className = "player";
     nametext.innerHTML = name;
@@ -295,8 +297,6 @@ socket.on('playermove', function(x, y, name, control){
         console.log("Error, player is not found");
     } else {
         
-
-        var speed = 2.85;
         var size = y * 0.238 - 41.32;
         x = x - size/2;
         y = y - size/2;
@@ -312,18 +312,18 @@ socket.on('playermove', function(x, y, name, control){
         var yMove = y - ypos;
         var absXMove = Math.abs(xMove);
         var absYMove = Math.abs(yMove);
-        var xyMove = Math.sqrt(absXMove*absXMove + absYMove*absYMove);
+        var xyMove = (absXMove + absYMove) * 2.5;
         var flip = (xMove < 0) ? 1:-1;
         img.css("transform", "scaleX("+ flip +")");
         
         if (xMove >= 0) xMove = "+=" + xMove;
-        else xMove = "-=" + -xMove;
+        else xMove = "-=" + absXMove;
         
         if (yMove >= 0) yMove = "+=" + yMove;
-        else yMove = "-=" + -yMove;
+        else yMove = "-=" + absYMove;
         
-        var realSpeed = (control == "instant") ? 0 : Math.round(xyMove * speed);
-        
+        var realSpeed = (control == "instant") ? 0 : Math.round(xyMove);
+
         catplayer.animate({
                 left: xMove,
                 top: yMove
