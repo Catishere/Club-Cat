@@ -1,6 +1,7 @@
 var socket = io();
 var yourname;
 var objects;
+var solidObjects;
 var messageSound;
 var mute = false;
 var currentRoom = null;
@@ -140,6 +141,8 @@ function prepareRoom(room) {
         console.log("unknown room");
     }
     
+    solidObjects = $(".solid-object");
+    
     do {
         objects = $(".object");
     } while (objects.length < objectlen);
@@ -189,6 +192,30 @@ function executeObjectAction(name, objectTrigger) {
             break;
         default:
     }
+}
+
+function get_line_intersection(p0_x, p0_y, p1_x, p1_y, 
+                               p2_x, p2_y, p3_x, p3_y) {
+    var intersect;
+    var s1_x, s1_y, s2_x, s2_y;
+    s1_x = p1_x - p0_x;
+    s1_y = p1_y - p0_y;
+    s2_x = p3_x - p2_x;
+    s2_y = p3_y - p2_y;
+
+    var s, t;
+    s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
+    t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
+
+    if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
+    {
+        // Collision detected
+        intersect.x = p0_x + (t * s1_x);
+        intersect.y = p0_y + (t * s1_y);
+        return intersect;
+    }
+
+    return false;
 }
 
 function checkAction(name, x, y) {
@@ -330,6 +357,9 @@ socket.on('playermove', function(x, y, name, control){
             }, realSpeed, "linear", function() {
                 checkAction(name, x, y);
         });
+        
+        var test = (absXMove + absYMove) / 1.42;
+        console.log("speed: " + realSpeed, "distance: " + test);
         
         img.animate({
             height: size,
