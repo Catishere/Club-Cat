@@ -41,7 +41,6 @@ var playercount = 0;
 
 io.on('connection', function(socket){
 
-    console.log("kur");
     var socketid;
     var name;
     

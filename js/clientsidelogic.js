@@ -2,7 +2,8 @@ var socket = io();
 var yourname;
 var objects;
 var solidObjects;
-var solidObjectsWalls = [];
+var allSolidObjects = {};
+var allSolidObjectsWalls = {};
 var messageSound;
 var mute = false;
 var currentRoom = null;
@@ -127,50 +128,53 @@ function prepareRoom(room) {
     $('.player').remove();
     
     $('.game').css('background-image', 'url("/images/'+ room +'.jpg")');
-    
+
     switch(room) { // needs separate object creation for easier object addition
     case "mars":
-        createObject("teleport_left", "teleport.png", UNDER, "0%", "40%");
-        createObject("teleport_right", "teleport.png", UNDER, "85%", "40%");
-        createObject("wall", "wall.png", SOLID, "50%", "50%");
-        objectlen = 2;
+        createObject("teleport_left", "teleport.png", UNDER, "mars", "0%", "40%");
+        createObject("teleport_right", "teleport.png", UNDER, "mars", "85%", "40%");
+        createObject("wall", "wall.png", SOLID, "mars", "50%", "50%");
+        objectlen = 3;
 
         break;
     case "earth":
-        createObject("teleport_left", "teleport.png", UNDER, "0%", "40%");
-        createObject("teleport_right", "teleport.png", UNDER, "85%", "40%");
+        createObject("teleport_left", "teleport.png", UNDER, "earth", "0%", "40%");
+        createObject("teleport_right", "teleport.png", UNDER, "earth", "85%", "40%");
         objectlen = 2;
 
         break;
     default:
         console.log("unknown room");
     }
-    
-    solidObjects = $(".solid-object");
-    solidObjects.each(function(i)
+
+
+    do {
+        objects = $(".object");
+    } while (objects.length < objectlen);
+
+    allSolidObjects[room] = $(".solid-object");
+    allSolidObjectsWalls[room] = [];
+    allSolidObjects[room].each(function(i)
     {
         $(this).on('load', function(){
             console.log($(this).width());
             var obj = $(this);
             var pos = obj.position();
-            solidObjectsWalls.push({x1: pos.left, y1: pos.top, x2: pos.left, y2: pos.top + obj.height()});
-            solidObjectsWalls.push({x1: pos.left, y1: pos.top, x2: pos.left + obj.width(), y2: pos.top});
-            solidObjectsWalls.push({x1: pos.left + obj.width(), y1: pos.top, x2: pos.left + obj.width(), y2: pos.top + obj.height()});
-            solidObjectsWalls.push({x1: pos.left, y1: pos.top + obj.height(), x2: pos.left + obj.width(), y2: pos.top + obj.height()});
+            allSolidObjectsWalls[room].push({x1: pos.left, y1: pos.top, x2: pos.left, y2: pos.top + obj.height()});
+            allSolidObjectsWalls[room].push({x1: pos.left, y1: pos.top, x2: pos.left + obj.width(), y2: pos.top});
+            allSolidObjectsWalls[room].push({x1: pos.left + obj.width(), y1: pos.top, x2: pos.left + obj.width(), y2: pos.top + obj.height()});
+            allSolidObjectsWalls[room].push({x1: pos.left, y1: pos.top + obj.height(), x2: pos.left + obj.width(), y2: pos.top + obj.height()});
         });
 
     });
-    console.log(solidObjectsWalls);
-    
-    do {
-        objects = $(".object");
-    } while (objects.length < objectlen);
+
+
     
     var spawn = spawnLocation(lastRoom);
     socket.emit('reqspawn', ' ' + currentRoom, yourname, spawn.x , spawn.y);
 }
 
-function createObject(name, decal, type, x, y) { /*x, y - string N% Npx etc.*/
+function createObject(name, decal, type, room, x, y) { /*x, y - string N% Npx etc.*/
     var object = document.createElement("img");
     object.id = name;
     object.className = type;
@@ -223,7 +227,13 @@ function get_line_intersection(p0_x, p0_y, p1_x, p1_y,
     s1_y = p1_y - p0_y;
     s2_x = p3_x - p2_x;
     s2_y = p3_y - p2_y;
-    
+
+    //
+    // console.log(p0_x, p0_y);
+    // console.log(p1_x, p1_y);
+    // console.log(p2_x, p2_y);
+    // console.log(p3_x, p3_y);
+
     var s, t;
     s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
     t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
@@ -361,15 +371,23 @@ socket.on('playermove', function(x, y, name, control){
         var ypos = parseInt(catplayer.css("top"));
         var destination_size = getSize(y);
         var current_size = getSize(ypos);
-        $.each(solidObjectsWalls, function(i, p) {
+        $.each(allSolidObjectsWalls[currentRoom], function(i, p) {
             var intersect = get_line_intersection(xpos + current_size/2, ypos + current_size/2,
                                                     x + destination_size/2, y + destination_size/2,
                                                     p.x1, p.y1,
                                                     p.x2, p.y2);
             console.log(intersect);
             if (intersect) {
-                x = intersect.x ;
-                y = intersect.y;
+                var xadjust = 0;
+                var yadjust = 0;
+                var adjsut_value = 15;
+
+                if (xpos > x ) xadjust = adjsut_value;
+                else if (xpos < x) xadjust = -adjsut_value;
+                if (ypos > y ) yadjust = adjsut_value;
+                else if (ypos < y) yadjust = -adjsut_value;
+                x = intersect.x + xadjust ;
+                y = intersect.y + yadjust;
             }
         });
         
