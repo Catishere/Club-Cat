@@ -12,8 +12,8 @@
     "url": "git+https://github.com/Catishere/Club-Cat.git"
   },
   "engines": {
-    "node": ">=4.3 <7.0",
-    "npm": ">=1.0.0"
+    "node": ">=8.11",
+    "npm": ">=6.0.0"
   },
   "author": "Victor Gyoshev",
   "license": "MIT",
