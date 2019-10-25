@@ -5,6 +5,9 @@ var solidObjects;
 var messageSound;
 var mute = false;
 var currentRoom = null;
+const SOLID = "object solid-object";
+const OVER = "object object-above-player";
+const UNDER = "object object-below-player";
 
 initPage();
 
@@ -126,14 +129,15 @@ function prepareRoom(room) {
     
     switch(room) { // needs separate object creation for easier object addition
     case "mars":
-        createObject("teleport_left", "teleport.png", true, "0%", "40%");
-        createObject("teleport_right", "teleport.png", true, "85%", "40%");
+        createObject("teleport_left", "teleport.png", UNDER, "0%", "40%");
+        createObject("teleport_right", "teleport.png", UNDER, "85%", "40%");
+        createObject("wall", "wall.png", SOLID, "50%", "50%");
         objectlen = 2;
 
         break;
     case "earth":
-        createObject("teleport_left", "teleport.png", true, "0%", "40%");
-        createObject("teleport_right", "teleport.png", true, "85%", "40%");
+        createObject("teleport_left", "teleport.png", UNDER, "0%", "40%");
+        createObject("teleport_right", "teleport.png", UNDER, "85%", "40%");
         objectlen = 2;
 
         break;
@@ -154,7 +158,7 @@ function prepareRoom(room) {
 function createObject(name, decal, type, x, y) { /*x, y - string N% Npx etc.*/
     var object = document.createElement("img");
     object.id = name;
-    object.className = (type) ? "object object-below-player" : "object object-above-player";  //true - under, false - above;
+    object.className = type;
     object.src = "images/" + decal;
     object.style.left = x;
     object.style.top = y;
@@ -196,19 +200,25 @@ function executeObjectAction(name, objectTrigger) {
 
 function get_line_intersection(p0_x, p0_y, p1_x, p1_y, 
                                p2_x, p2_y, p3_x, p3_y) {
-    var intersect;
+                                   
+    var intersect = {};
+
     var s1_x, s1_y, s2_x, s2_y;
     s1_x = p1_x - p0_x;
     s1_y = p1_y - p0_y;
     s2_x = p3_x - p2_x;
     s2_y = p3_y - p2_y;
 
+    console.log(p0_x, p0_y);
+    console.log(p1_x, p1_y);
+    console.log(p2_x, p2_y);
+    console.log(p3_x, p3_y);
+    
     var s, t;
     s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
     t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
 
-    if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
-    {
+    if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
         // Collision detected
         intersect.x = p0_x + (t * s1_x);
         intersect.y = p0_y + (t * s1_y);
@@ -323,10 +333,7 @@ socket.on('playermove', function(x, y, name, control){
     if (name == null) {
         console.log("Error, player is not found");
     } else {
-        
-        var size = y * 0.238 - 41.32;
-        x = x - size/2;
-        y = y - size/2;
+
         var catplayer = $("#" + name);
         var img = catplayer.find('img');
 
@@ -335,6 +342,23 @@ socket.on('playermove', function(x, y, name, control){
         
         var xpos = parseInt(catplayer.css("left"));
         var ypos = parseInt(catplayer.css("top"));
+        
+        solidObjects.each(function(i) {
+            var pos = $(this).position();
+            var intersect = get_line_intersection(xpos, ypos, x, y, pos.left, pos.top, pos.left, pos.top + $(this).height());
+            console.log(intersect);
+            if (intersect) {
+                
+                var size = intersect.y * 0.238 - 41.32;
+                x = intersect.x  - size/2;
+                y = intersect.y - size/2;
+            }
+        });
+        
+        var size = y * 0.238 - 41.32;
+        x = x - size/2;
+        y = y - size/2;
+
         var xMove = x - xpos;
         var yMove = y - ypos;
         var absXMove = Math.abs(xMove);
@@ -342,7 +366,7 @@ socket.on('playermove', function(x, y, name, control){
         var xyMove = (absXMove + absYMove) * 2.5;
         var flip = (xMove < 0) ? 1:-1;
         img.css("transform", "scaleX("+ flip +")");
-        
+
         if (xMove >= 0) xMove = "+=" + xMove;
         else xMove = "-=" + absXMove;
         
@@ -359,7 +383,6 @@ socket.on('playermove', function(x, y, name, control){
         });
         
         var test = (absXMove + absYMove) / 1.42;
-        console.log("speed: " + realSpeed, "distance: " + test);
         
         img.animate({
             height: size,

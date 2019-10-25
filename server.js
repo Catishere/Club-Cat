@@ -1,32 +1,41 @@
 var express = require('express');
-var path     = require('path');
+var path    = require('path');
 var app     = express();
-var http    = require('http').Server(app);
-var io        = require('socket.io')(http);
+var server    = require('http').createServer(app);
+var io      = require('socket.io')(server);
 var port    = process.env.PORT || 3000;
-var conn = "postgres://postgres:root@localhost:5432/catclub";
+var favicon = require('serve-favicon');
 
 process.setMaxListeners(0);
 
 app.use("/", express.static(__dirname));
+app.use(favicon(path.join(__dirname,'images','favicon.ico')));
 
-var knex = require('knex')({
+// Setting up the database connection
+const knex = require('knex')({
     client: 'pg',
-    connection:  process.env.DATABASE_URL || conn,
-    searchPath: 'knex,public'
+    connection: {
+        host     : '127.0.0.1',
+        user     : 'postgres',
+        password : 'password',
+        database : 'catclub',
+        charset  : 'utf8'
+    }
 });
 
-knex.schema.createTableIfNotExists('user', function (table) {
-    table.increments();
-    table.string('name');
-    table.string('password');
-    table.integer('points').defaultTo(0);
-    table.date("joined");
-}).then();
+const bookshelf = require('bookshelf')(knex)
 
-var bookshelf = require('bookshelf')(knex);
+if (!knex.schema.hasTable('user'))
+    knex.schema.createTable('user', function (table) {
+        table.increments();
+        table.string('name');
+        table.string('password');
+        table.integer('points').defaultTo(0);
+        table.date("joined");
+    }).then();
 
-var User = bookshelf.Model.extend({
+
+var User = bookshelf.model('User', {
     tableName: 'user'
 });
 
@@ -34,8 +43,9 @@ var hardcode_users = {};
 
 var playercount = 0;
 
-io.sockets.on('connection', function(socket){
+io.on('connection', function(socket){
 
+    console.log("kur");
     var socketid;
     var name;
     
@@ -62,7 +72,7 @@ io.sockets.on('connection', function(socket){
             socket.emit('errors', 'Dont cheat cunt!');
         } else {
             new User({'name': name})
-            .fetch()
+            .fetch({ require: false })
             .then(function(model) {
                 if (model == null) {
                     if (register)
@@ -73,12 +83,14 @@ io.sockets.on('connection', function(socket){
                             socket.emit('login');
                             
                             io.to('mars').emit('chat message', null, name + " joined.", null);
+                        }).catch(function(error){
+                            console.error(error)
                         });
                     else
                         socket.emit('errors', 'Account doesnt exist!');
                 }
                 else if (!register) {
-                    if (model.get('password') == password) {
+                    if (model.get('password') === password) {
                         socketid = model.get('id');
                         hardcode_users[name] = 'mars';
                         socket.emit('login');
@@ -92,6 +104,8 @@ io.sockets.on('connection', function(socket){
                 else {
                     socket.emit('errors', 'Account already exists!');
                 }
+            }).catch(function(error) {
+                console.error(error)
             });
         }
     });
@@ -133,6 +147,6 @@ io.sockets.on('connection', function(socket){
 });
 
 
-http.listen(port, function(){
+server.listen(port, function(){
     console.log('listening on *:' + port);
 });
