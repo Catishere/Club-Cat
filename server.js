@@ -27,7 +27,7 @@ const bookshelf = require('bookshelf')(knex)
 
 if (!knex.schema.hasTable('user'))
     knex.schema.createTable('user', function (table) {
-        table.increments();
+        table.increments('id');
         table.string('name');
         table.string('password');
         table.integer('points').defaultTo(0);
@@ -74,7 +74,7 @@ io.on('connection', function(socket){
             new User({'name': name})
             .fetch({ require: false })
             .then(function(model) {
-                if (model == null) {
+                if (model === null) {
                     if (register)
                         new User({'name': name, 'password': password, 'joined': new Date()}).save().then(function(mdl) {
                             socketid = mdl.get('id');
@@ -113,7 +113,7 @@ io.on('connection', function(socket){
     socket.on('chat message', function(name, msg, control) {
         
         
-        if (msg == "!points")
+        if (msg === "!points")
         {
             new User({'name': name})
             .fetch()
@@ -133,7 +133,7 @@ io.on('connection', function(socket){
     
     socket.on('disconnect', function() {
         
-        if (socketid != null)
+        if (socketid !== null)
             new User({'id': socketid})
             .fetch()
             .then(function(model) {

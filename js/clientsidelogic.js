@@ -2,6 +2,7 @@ var socket = io();
 var yourname;
 var objects;
 var solidObjects;
+var solidObjectsWalls = [];
 var messageSound;
 var mute = false;
 var currentRoom = null;
@@ -27,7 +28,7 @@ function loginHandle(register) {
     var username = $('#username').val();
     var password = $('#password').val();
     
-    if (username != '' && password != '')
+    if (username !== '' && password !== '')
     {
         if (username.match(/^[0-9a-zA-Z]{1,16}$/))
             socket.emit('attemptlogin', username, password, register);
@@ -43,9 +44,9 @@ $('#game-container').click(function() {
     var x = event.clientX - offset.left;
     var y = event.clientY - offset.top;
 
-    if (yourname != null && $('#'+yourname) != null) {
-        var ratio = (y * 1.0) / 768;
-        if (ratio < 0.95 && ratio > 0.3 && x + y != 0)
+    if (yourname !== null && $('#'+yourname) !== null) {
+        var ratio = y / 768;
+        if (ratio < 0.95 && ratio > 0.3 && x + y !== 0)
             socket.emit('playermove', x, y, yourname, null);
     }     
 });
@@ -81,23 +82,23 @@ function initPage() {
 
 function spawnLocation(lastRoom) {
     var spawn = {};
-    
+    var pos;
     switch(currentRoom) {
         case "mars":
-        if (lastRoom == "earth") {
-            var pos = $('#teleport_right').position();
+        if (lastRoom === "earth") {
+            pos = $('#teleport_right').position();
             spawn.x = pos.left - 50;
             spawn.y = pos.top + 100;
-        } else if (lastRoom == null) {
-            var pos = $("#teleport_left").position();
+        } else if (lastRoom === null) {
+            pos = $("#teleport_left").position();
             spawn.x = pos.left + 250; 
             spawn.y = pos.top + 100;
         }
         break;
         
         case "earth":
-            if (lastRoom == "mars") {
-                var pos = $("#teleport_left").position();
+            if (lastRoom === "mars") {
+                pos = $("#teleport_left").position();
                 spawn.x = pos.left + 250; 
                 spawn.y = pos.top + 100;
             }
@@ -110,17 +111,17 @@ function prepareRoom(room) {
     
     var objectlen = 0;
 
-    if (currentRoom == room) {
+    if (currentRoom === room) {
         return true;
     }
     
-    if (currentRoom != null)
+    if (currentRoom !== null)
         socket.emit('leaveroom', currentRoom, yourname);
     
     var lastRoom = currentRoom;
     currentRoom = room;
     
-    if (yourname != null) socket.emit('joinroom', room, yourname);
+    if (yourname !== null) socket.emit('joinroom', room, yourname);
     
     $('.object').remove();
     $('.player').remove();
@@ -146,6 +147,20 @@ function prepareRoom(room) {
     }
     
     solidObjects = $(".solid-object");
+    solidObjects.each(function(i)
+    {
+        $(this).on('load', function(){
+            console.log($(this).width());
+            var obj = $(this);
+            var pos = obj.position();
+            solidObjectsWalls.push({x1: pos.left, y1: pos.top, x2: pos.left, y2: pos.top + obj.height()});
+            solidObjectsWalls.push({x1: pos.left, y1: pos.top, x2: pos.left + obj.width(), y2: pos.top});
+            solidObjectsWalls.push({x1: pos.left + obj.width(), y1: pos.top, x2: pos.left + obj.width(), y2: pos.top + obj.height()});
+            solidObjectsWalls.push({x1: pos.left, y1: pos.top + obj.height(), x2: pos.left + obj.width(), y2: pos.top + obj.height()});
+        });
+
+    });
+    console.log(solidObjectsWalls);
     
     do {
         objects = $(".object");
@@ -186,7 +201,7 @@ function executeObjectAction(name, objectTrigger) {
     
     //var object = $('#' + objectTrigger);
     //var objPos = object.position();
-    var isYou = (name == yourname);
+    var isYou = (name === yourname);
     switch (objectTrigger) {
         case "teleport_right":
             if (isYou) prepareRoom("earth");
@@ -208,11 +223,6 @@ function get_line_intersection(p0_x, p0_y, p1_x, p1_y,
     s1_y = p1_y - p0_y;
     s2_x = p3_x - p2_x;
     s2_y = p3_y - p2_y;
-
-    console.log(p0_x, p0_y);
-    console.log(p1_x, p1_y);
-    console.log(p2_x, p2_y);
-    console.log(p3_x, p3_y);
     
     var s, t;
     s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
@@ -244,7 +254,7 @@ function spawnPlayer(name, x, y) {
     player.style.width = "60px";
     fig.className = "player";
     nametext.innerHTML = name;
-    if (x != null ) {
+    if (x !== null ) {
         fig.style.left = x + 'px';
         fig.style.top = y + 'px';
         player.style.height = size + 'px';
@@ -253,6 +263,11 @@ function spawnPlayer(name, x, y) {
     fig.appendChild(player);
     fig.appendChild(nametext);
     $(".game").append(fig);
+}
+
+function getSize(y)
+{
+    return y * 0.238 - 41.32;
 }
 
 function displayChat(name, message) {
@@ -265,30 +280,31 @@ function displayChat(name, message) {
     var marginres = 50 + 25 * (message.length/10);
     div.style.marginTop = "-" + marginres + "px";
     player.prepend(div);
-    if (name != yourname) playAudio(messageSound);
+    if (name !== yourname) playAudio(messageSound);
     setTimeout(function(){ div.remove();}, 7950);
 }
 
 $('form').submit(function(){
-    if ($('#username').val() == '') {
-        if ($('#m').val().match(/^[-!@#$%^&*()_+|~={}\[\]:;<>?,.\/0-9a-zA-Z ]{1,80}$/)) {
-            socket.emit('chat message', yourname, $('#m').val(), currentRoom);
-            $('#m').focus();
+    if ($('#username').val() === '') {
+        var m = $('#m');
+        if (m.val().match(/^[-!@#$%^&*()_+|~={}\[\]:;<>?,.\/0-9a-zA-Z ]{1,80}$/)) {
+            socket.emit('chat message', yourname, m.val(), currentRoom);
+            m.focus();
         } else 
             displayError("Invalid Message!");
-        
-        $('#m').val('');
+
+        m.val('');
     }
     return false;
 });
 
 socket.on('spawn', function(target, name, x, y){
-    if (yourname != null) {
-        if (yourname == target) {
+    if (yourname !== null) {
+        if (yourname === target) {
             spawnPlayer(name, x, y);
-        } else if (target == 'A L L') {
+        } else if (target === 'A L L') {
             spawnPlayer(name, x, y);
-            if (name != yourname) {
+            if (name !== yourname) {
                 var catplayer = $('#' + yourname);
                 socket.emit('reqspawn', name, yourname, catplayer.position().left, catplayer.position().top);
             }
@@ -302,11 +318,11 @@ socket.on('playerleftroom', function (name) {
 
 socket.on('chat message', function(name, msg, control){
   
-    if (control == 'disconnect') {
+    if (control === 'disconnect') {
         console.log("disappear please");
         $('#'+name).remove();
     }
-    if (name == null || control != null) {
+    if (name === null || control !== null) {
         $('#messages').append($('<li>').text(msg));
     }
     else {
@@ -324,13 +340,14 @@ socket.on('errors', function(message){
 
 socket.on('login', function(){
     $("#myModal").hide();
-    yourname = $('#username').val();
+    var username_s = $('#username');
+    yourname = username_s.val();
     prepareRoom("mars");
-    $('#username').val('');
+    username_s.val('');
 });
 
 socket.on('playermove', function(x, y, name, control){
-    if (name == null) {
+    if (name === null) {
         console.log("Error, player is not found");
     } else {
 
@@ -342,20 +359,21 @@ socket.on('playermove', function(x, y, name, control){
         
         var xpos = parseInt(catplayer.css("left"));
         var ypos = parseInt(catplayer.css("top"));
-        
-        solidObjects.each(function(i) {
-            var pos = $(this).position();
-            var intersect = get_line_intersection(xpos, ypos, x, y, pos.left, pos.top, pos.left, pos.top + $(this).height());
+        var destination_size = getSize(y);
+        var current_size = getSize(ypos);
+        $.each(solidObjectsWalls, function(i, p) {
+            var intersect = get_line_intersection(xpos + current_size/2, ypos + current_size/2,
+                                                    x + destination_size/2, y + destination_size/2,
+                                                    p.x1, p.y1,
+                                                    p.x2, p.y2);
             console.log(intersect);
             if (intersect) {
-                
-                var size = intersect.y * 0.238 - 41.32;
-                x = intersect.x  - size/2;
-                y = intersect.y - size/2;
+                x = intersect.x ;
+                y = intersect.y;
             }
         });
         
-        var size = y * 0.238 - 41.32;
+        var size = getSize(y);
         x = x - size/2;
         y = y - size/2;
 
@@ -367,13 +385,13 @@ socket.on('playermove', function(x, y, name, control){
         var flip = (xMove < 0) ? 1:-1;
         img.css("transform", "scaleX("+ flip +")");
 
-        if (xMove >= 0) xMove = "+=" + xMove;
-        else xMove = "-=" + absXMove;
+        if (xMove >= 0) xMove = "+=" + Math.round(xMove);
+        else xMove = "-=" + Math.round(absXMove);
         
-        if (yMove >= 0) yMove = "+=" + yMove;
-        else yMove = "-=" + absYMove;
+        if (yMove >= 0) yMove = "+=" + Math.round(yMove);
+        else yMove = "-=" + Math.round(absYMove);
         
-        var realSpeed = (control == "instant") ? 0 : Math.round(xyMove);
+        var realSpeed = (control === "instant") ? 0 : Math.round(xyMove);
 
         catplayer.animate({
                 left: xMove,
