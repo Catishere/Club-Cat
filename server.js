@@ -11,19 +11,15 @@ process.setMaxListeners(0);
 app.use("/", express.static(__dirname));
 app.use(favicon(path.join(__dirname,'images','favicon.ico')));
 
-// Setting up the database connection
+var conn = "postgres://postgres:root@localhost:5432/catclub";
+
 const knex = require('knex')({
     client: 'pg',
-    connection: {
-        host     : '127.0.0.1',
-        user     : 'postgres',
-        password : 'root',
-        database : 'catclub',
-        charset  : 'utf8'
-    }
-});
+    connection:  process.env.DATABASE_URL || conn,
+    searchPath: ['knex','public']
+    });
 
-const bookshelf = require('bookshelf')(knex)
+const bookshelf = require('bookshelf')(knex);
 
 if (!knex.schema.hasTable('user'))
     knex.schema.createTable('user', function (table) {
