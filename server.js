@@ -17,7 +17,7 @@ const knex = require('knex')({
     connection: {
         host     : '127.0.0.1',
         user     : 'postgres',
-        password : 'password',
+        password : 'postgres',
         database : 'catclub',
         charset  : 'utf8'
     }
