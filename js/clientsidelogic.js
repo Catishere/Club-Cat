@@ -28,6 +28,7 @@ $('#toggleChat').click(function() {
 });
 
 $('#toggleEdit').click(function() {
+    $(".object-edit-temporary").remove();
     edit_mode = !edit_mode;
 });
 
