@@ -30,6 +30,14 @@ if (!knex.schema.hasTable('user'))
         table.date("joined");
     }).then();
 
+if (!knex.schema.hasTable('walls'))
+    knex.schema.createTable('user', function (table) {
+        table.increments('id');
+        table.float('x1');
+        table.string('y1');
+        table.string('x2');
+        table.string('y2');
+    }).then();
 
 var User = bookshelf.model('User', {
     tableName: 'user'

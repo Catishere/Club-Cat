@@ -20,6 +20,14 @@
     height: 10%;
 }
 
+.circle {
+    border: 3px solid red;
+    border-radius: 50px;
+    width: 5px;
+    position: absolute;
+    height: 5px;
+}
+
 .player {
     position: absolute;
     z-index: 3;
@@ -45,6 +53,12 @@
 
 .object-above-player {
     z-index: 4;
+}
+
+.object-edit-temporary
+{
+    position: absolute;
+    z-index: 5;
 }
 
 .object {
@@ -165,14 +179,22 @@ a {
 }
 
 .chat:focus {
-    height: 25px:
+    height: 25px;
 }
 
 .chatlog-button {
     position: absolute; 
     text-align: center; 
-    left: 33%; 
+    left: 33%;
     top: 17%; 
+    height: 71%;
+}
+
+.toggleEdit-button{
+    position: absolute;
+    text-align: center;
+    left: 38.5%;
+    top: 17%;
     height: 71%;
 }
 
@@ -235,6 +257,6 @@ figcaption {
     animation-duration: 8s;
     max-width: 150px;
     min-width: 100px;
-    word-break: break-word;
+    word-break: normal;
 }
 

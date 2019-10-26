@@ -1,15 +1,17 @@
 var socket = io();
 var yourname;
 var objects;
-var solidObjects;
 var allSolidObjects = {};
 var allSolidObjectsWalls = {};
 var messageSound;
+var edit_mode = false;
+var last_point = {};
 var mute = false;
 var currentRoom = null;
 const SOLID = "object solid-object";
 const OVER = "object object-above-player";
 const UNDER = "object object-below-player";
+const EDIT = "object-edit-temporary";
 
 initPage();
 
@@ -23,6 +25,10 @@ $('#register').click(function() {
 
 $('#toggleChat').click(function() {
     $("#chatlog").toggle();
+});
+
+$('#toggleEdit').click(function() {
+    edit_mode = !edit_mode;
 });
 
 function loginHandle(register) {
@@ -42,15 +48,43 @@ function loginHandle(register) {
 
 $('#game-container').click(function() {
     var offset = $('.game').offset();
-    var x = event.clientX - offset.left;
-    var y = event.clientY - offset.top;
-
+    var x = event.clientX - offset.left - 2;
+    var y = event.clientY - offset.top - 2;
+    console.log("click");
     if (yourname !== null && $('#'+yourname) !== null) {
+
         var ratio = y / 768;
-        if (ratio < 0.95 && ratio > 0.3 && x + y !== 0)
-            socket.emit('playermove', x, y, yourname, null);
+        if (ratio < 0.95 && ratio > 0.3 && x + y !== 0) {
+            if (edit_mode) {
+                createObject("p"+x+"x"+y, "dot.png", EDIT, currentRoom, x + "px", y + "px");
+                allSolidObjectsWalls[currentRoom].push({x1: x, y1: y, x2: last_point.x, y2: last_point.y});
+                last_point = {x: x, y: y};
+                console.log(last_point);
+            }
+            else
+                socket.emit('playermove', x, y, yourname, null);
+        }
+
     }     
 });
+
+// function linedraw(x1, y1, x2, y2) {
+//     if (x2 < x1) {
+//         var tmp = x2;
+//         x2 = x1;
+//         x1 = tmp;
+//         var tmp = y2;
+//         y2 = y1;
+//         y1 = tmp;
+//     }
+//
+//     var lineLength = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+//     var m = (y2 - y1) / (x2 - x1)
+//
+//     var degree = Math.atan(m) * 180 / Math.PI
+//
+//     document.body.innerHTML += "<div class='line' style='transform-origin: top left; transform: rotate(" + degree + "deg); width: " + lineLength + "px; height: 3px; background: black; position: absolute; top: " + y1 + "px; left: " + x1 + "px;'></div>"
+// }
 
 function playAudio(audio) {
     if (!mute)
@@ -227,12 +261,6 @@ function get_line_intersection(p0_x, p0_y, p1_x, p1_y,
     s1_y = p1_y - p0_y;
     s2_x = p3_x - p2_x;
     s2_y = p3_y - p2_y;
-
-    //
-    // console.log(p0_x, p0_y);
-    // console.log(p1_x, p1_y);
-    // console.log(p2_x, p2_y);
-    // console.log(p3_x, p3_y);
 
     var s, t;
     s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
